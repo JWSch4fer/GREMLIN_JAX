@@ -98,15 +98,9 @@ def Read_MSA(file_path: str):
 
         with open(file_path, 'r') as file:
             _ = np.array([line.strip() for line in file])
-        names = _[::2]; seqs =  _[1::2]
-    # elif '.sto' in file_path:
-    #     with open(file_path, 'r') as file:
-    #         _ = [line.strip() for line in file if '#' not in line]
-    #     _ = list(filter(lambda x: x != '', _))    # remove any empty lines
-    #     _ = list(filter(lambda x: x != '//', _))  # end flag for sto format
-    #     _ = np.array(list(map(lambda x: re.split(r'\s+', x), _))) # split names and seqs
-    #     names = _[:, 0]
-    #     seqs = _[:, 1]
+        name_idx = np.where(np.char.startswith(_, '>'))[0]
+        names = _[name_idx]
+        seqs = [''.join(_[name_idx[idx]+1:name_idx[idx+1]]) for idx,seq in enumerate(name_idx[:-1])]
     else:
         print("###########################################################")
         print("Couldn't read multiple sequence alignment")
