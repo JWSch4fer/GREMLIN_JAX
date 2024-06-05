@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from logging import raiseExceptions
 import sys
 import re
 from itertools import product
@@ -267,6 +268,37 @@ def Plot_cmap(two_body, aa, name):
     plt.clf()
     plt.close()
 
+def Score_MSA(one_body, two_body, seqs, gaps=False):
+    #use translate_msa to change seqs into integer version
+    seqs_int = Translate_Msa(seqs)
+    if seqs_int.shape[1] != two_body.shape[0]:
+        raise Exception("Sequences for scoring do not have the same number of amino acids used in constructing the MRF.")
+
+    # Initialize parameters
+    states = 21 #20 aa + gap
+    #use a bitmap to encode the integer version of the msa
+    msa_bitmap = jax.nn.one_hot(seqs_int, states)
+    if not gaps:
+        states = states - 1
+        msa_bitmap = msa_bitmap[...,:states]
+
+    def score(seqs):
+        one_two = one_body + jnp.tensordot(seqs, two_body, axes=2)
+        markov_blanket = jnp.sum(seqs * one_two, axis=-1)
+        return jnp.sum(markov_blanket, axis = -1)
+
+    _ = sorted([[float(score), ''.join(seq)] for score, seq in zip(score(msa_bitmap), seqs)], key = lambda x: x[0])
+    output = ''
+    for line in _:
+        output += "{:.3f}".format(line[0]).ljust(15) + str(line[1]) + '\n'
+
+    with open('mrf_msa.score', 'w') as file:
+        file.write(output)
+        
+
+
+
+
 def main(fasta, filter_msa, filter_msa_row, filter_msa_col, gaps):
 
     print(f"Running {fasta.split('.')[0]}...")
@@ -288,6 +320,8 @@ def main(fasta, filter_msa, filter_msa_row, filter_msa_col, gaps):
     Plot_loss(losses, name=fasta.split('.')[0]) 
     Plot_one_body(one_body, aa, name=fasta.split('.')[0])
     Plot_cmap(two_body, aa, name=fasta.split('.')[0])
+
+    Score_MSA(one_body, two_body, seqs, gaps = gaps)
 
 if  __name__ == '__main__':
     main(*CL_input())
