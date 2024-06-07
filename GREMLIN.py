@@ -294,9 +294,6 @@ def Score_MSA(one_body, two_body, seqs, gaps=False):
 
     with open('mrf_msa.score', 'w') as file:
         file.write(output)
-        
-
-
 
 
 def main(fasta, filter_msa, filter_msa_row, filter_msa_col, gaps):
