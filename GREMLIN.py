@@ -222,7 +222,7 @@ def GREMLIN(seqs: array, iterations=50, gaps=False):
 
 def Plot_loss(loss, name):
     fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = (5,5))
-    ax.scatter(np.linspace(start=0, stop=loss.shape[0]), loss)
+    ax.scatter(np.linspace(start=0, stop=loss.shape[0], num=len(loss)), loss)
     plt.ylabel('Loss')
     plt.xlabel('Iteration')
     plt.savefig(f'{name}_loss.png')
