@@ -73,23 +73,33 @@ def CL_input():
     """
     Parse command line arguments being passed in
     """
+    error_message = """
+Missing command line arguments!
+Available flags:
+-msa ####.fa              | multi-line fasta format multiple sequence alignment
+-gaps [True]/False        | [retain]/eliminate gaps from mrf calculation
+-filter_msa True/[False]  | remove sequences that are more than 25% gap and columns that are more than 75% gaps
+-filter_msa_row [0.25]    | remove sequences that are more than [x]% gap
+-filter_msa_col [0.75]    | remove  columns  that are more than [x]% gap
+"""
+    options = ["-msa", "-gaps", "-filter_msa", "-filter_msa_row", "-filter_msa_col"]
+    for i in sys.argv:
+        if '-' in i and i not in options:
+            print(f"This is not an option: {i}")
+            print(error_message)
+            sys.exit()
+
     if not any((True if _ == '-msa' else False for _ in sys.argv)) or len(sys.argv) < 3:
-        print('Missing command line arguments!')
-        print('Available flags:')
-        print("-msa ####.fa              | multi-msa file of multiple sequence alignment")
-        print("-gaps [True]/False        | [retain]/eliminate gaps from mrf calculation")
-        print("-filter_msa True/[False]  | remove sequences that are more than 25% gap and columns that are more than 75% gaps")
-        print("-filter_msa_row [0.25]    | remove sequences that are more than [x]% gap")
-        print("-filter_msa_col [0.75]    | remove  columns  that are more than [x]% gap")
+        print(error_message)
         sys.exit()
 
     msa = sys.argv[[idx for idx, _ in enumerate(sys.argv) if '-msa' == _][0] + 1]
     filter_msa = True if any((True if _ == '-filter_msa' else False for _ in sys.argv)) else False
     gaps = False if any((True if _ == '-gaps' else False for _ in sys.argv)) else True
     filter_msa_row = 0.25 if not [idx for idx, _ in enumerate(sys.argv) if '-filter_msa_row' == _] else sys.argv[[idx for idx, _ in enumerate(sys.argv) if '-filter_msa_row' == _][0] + 1]
-
     filter_msa_col = 0.75 if not [idx for idx, _ in enumerate(sys.argv) if '-filter_msa_col' == _] else sys.argv[[idx for idx, _ in enumerate(sys.argv) if '-filter_msa_col' == _][0] + 1]
     return msa, filter_msa, filter_msa_row, filter_msa_col, gaps
+
 
 def Read_MSA(file_path: str):
     """
@@ -102,6 +112,16 @@ def Read_MSA(file_path: str):
         name_idx = np.where(np.char.startswith(_, '>'))[0]
         names = _[name_idx]
         seqs = [''.join(_[name_idx[idx]+1:name_idx[idx+1]]) for idx,seq in enumerate(name_idx[:-1])]
+    elif '.sto' in file_path:
+        with open (file_path, 'r') as file:
+            _ = np.array([line.strip() for line in file if not any(line.startswith(c) for c in ['#', '//'])])
+        _ = np.delete(_, np.argwhere(_ == ''))
+        names = []; seqs = []
+        for info in _:
+            name, seq = info.split()
+            names.append(name)
+            seqs.append(seq)
+
     else:
         print("###########################################################")
         print("Couldn't read multiple sequence alignment")
