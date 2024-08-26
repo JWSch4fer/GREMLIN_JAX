@@ -29,7 +29,7 @@ class PREPROCESS_MSA():
 
         #load msa information into numpy
         seqs = np.array([[*aas] for aas in seqs], dtype="<U1")
-        names = np.array(names, dtype=np.string_)
+        names = np.array(names, dtype=np.bytes_)
 
         print('MSA started at {:} rows and {:} columns'.format(seqs.shape[0],seqs.shape[1]))
 
@@ -251,16 +251,20 @@ def Plot_loss(loss, name):
 
 def Plot_one_body(one_body, aa, name):
 
+    x_tick_names = [*"RHKDESTNQAVILMFYWCGP-"]
+
     limit = max(np.abs(np.min(one_body)), np.abs(np.max(one_body)))
     plot_array = np.full((aa.shape[0], one_body.shape[1]), np.nan)
     plot_array[aa[:,1] == 1] = one_body
 
     fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = (8,8))
-    _ = ax.imshow(plot_array, cmap = 'coolwarm', interpolation = 'none', vmin = -limit, vmax = limit)
-    plt.xticks(np.linspace(start=0, stop=20, num=21), [*"RHKDESTNQAVILMFYWCGP-"])
+    plt.subplots_adjust(left=0.2, right=0.85, top=0.9, bottom=0.1)
+    _ = ax.imshow(plot_array, cmap = 'coolwarm', interpolation = 'none', vmin = -limit, vmax = limit, aspect='auto')
+    plt.xticks(np.linspace(start=0, stop=20, num=21), x_tick_names )
+
     cbar = fig.colorbar(_, ticks = [-limit, limit])
     cbar.ax.set_yticklabels(['Least Probable','Most Probable'])
-    plt.subplots_adjust(left=0.01, right=0.85, top=0.9, bottom=0.1)
+
     plt.savefig(f'{name}_aa_freq.png')
     plt.clf()
     plt.close()
@@ -282,8 +286,12 @@ def Plot_cmap(two_body, aa, name):
     plot_array = np.full((aa.shape[0],aa.shape[0]), np.nan)
     plot_array[_[:,0], _[:,1]] = zscore.ravel()
 
+    fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = (8,8))
+    ax.imshow(plot_array.reshape((aa.shape[0],aa.shape[0])), cmap='Greys', vmin=1, vmax=3)
+    ax.invert_yaxis()
+    ax.set_ylabel(name)
+    ax.set_xlabel(name)
 
-    plt.imshow(plot_array.reshape((aa.shape[0],aa.shape[0])), cmap='Greys', vmin=1, vmax=3)
     plt.savefig(f'{name}_cmap.png')
     plt.clf()
     plt.close()
