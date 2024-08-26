@@ -1,5 +1,7 @@
 0_readme
 *.score
+msa/2oug.fas
+msa/2lx7.sto
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
