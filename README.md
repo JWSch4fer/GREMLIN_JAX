@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 Produce predictions of which residues are in contact and view the probability of each amino acid at each position based on the Markov Random Field.
 
-##Example run:
+## Example run:
 `python GREMLIN_JAX.py -msa 2lx7.sto -gaps -filter_msa`
 
 | Predicted Contact Map | Amion Acid Frequency|
