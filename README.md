@@ -11,7 +11,7 @@ pip install -r requirements.txt
 
 ## Available flags:
 ```
- -msa ####.fa              | multi-line fasta format multiple sequence alignment
+ -msa ####                 | fasta or stockholm format multiple sequence alignment
  -gaps [True]/False        | [retain]/eliminate gaps from mrf calculation
  -filter_msa True/[False]  | remove sequences that are more than 25% gap and columns that are more than 75% gaps
  -filter_msa_row [0.25]    | remove sequences that are more than [x]% gap
