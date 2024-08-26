@@ -265,6 +265,7 @@ def Plot_one_body(one_body, aa, name):
     cbar = fig.colorbar(_, ticks = [-limit, limit])
     cbar.ax.set_yticklabels(['Least Probable','Most Probable'])
 
+    ax.set_ylabel(name)
     plt.savefig(f'{name}_aa_freq.png')
     plt.clf()
     plt.close()
