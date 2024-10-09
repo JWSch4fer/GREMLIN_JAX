@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-from logging import raiseExceptions
 import sys
-import re
 from itertools import product
 
 from scipy.spatial.distance import pdist, squareform
@@ -12,7 +10,7 @@ from jax.scipy.special import logsumexp
 from jax.numpy import array
 import jax.numpy as jnp
 import jax
-import optax
+from GradientTransformation import Lbfgs
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,17 +38,14 @@ class PREPROCESS_MSA():
         self.aa = np.array([np.array([idx, 1]) for idx, aa in enumerate(self.seqs[0])])
         #__________________________________________________________
         print('MSA has been reduced to {:} rows and {:} columns'.format(self.seqs.shape[0],self.seqs.shape[1]))
+        np.random.shuffle(self.seqs[1:])
         # shuffle sequences before running MRF
         #__________________________________________________________
-        np.random.shuffle(self.seqs[1:])
 
-
- 
     def reduce_gaps(self):
         """
         remove rows and columns that contain too many gaps for coevolutionary analysis
         """
-        #
         #__________________________________________________________
         gap_count = np.sum(self.seqs == '-', axis=1)
         gap_percent = gap_count / self.seqs.shape[1]
@@ -171,7 +166,6 @@ def GREMLIN(seqs: array, iterations=50, gaps=False):
 
     # Initialize parameters
     states = 21 #20 aa + gap
-    #use a bitmap to encode the integer version of the msa
     msa_bitmap = jax.nn.one_hot(seqs_int, states)
     NO_GAP = False
     if not gaps:
@@ -221,22 +215,27 @@ def GREMLIN(seqs: array, iterations=50, gaps=False):
         return -PLL_weighted + (L2_V + L2_W) / jnp.sum(seqs_weights)
 
     @jax.jit
-    def opt_step(iterate, _):
-        x, opt_state = iterate
-        grad = jax.grad(loss)(x)
-        updates, opt_state = solver.update(grad, opt_state, x)
-        x = optax.apply_updates(x, updates)
-        return (x, opt_state), loss(x)
+    def opt_step(carry, _):
+        opt_state, losses = carry
+        opt_state = optimizer.update(opt_state)
+        losses = losses.at[opt_state.k].set(loss(opt_state.position))
+        return (opt_state, losses), _
 
-
-    solver = optax.adadelta(learning_rate=1.)
+    #custom implimitations of l-bfgs
+    #see https://github.com/JWSch4fer/LBFGS_JAX
+    optimizer = Lbfgs(f=loss, m=10)
     x_0 = jnp.concatenate([one_body_init.ravel(), two_body_init.ravel()])
-    opt_state = solver.init(x_0)
-    x_final, losses = jax.lax.scan(opt_step, (x_0, opt_state), None, length=iterations)
+    opt_state = optimizer.init(x_0)
+
+    iterations=100
+    losses = jnp.zeros((iterations,))
+    (final_state, losses), _ = jax.lax.scan(opt_step, (opt_state,losses), None, length=iterations)
+    losses = jnp.array(jnp.where(losses == 0, jnp.nan, losses))
+
 
     one_body_size = one_body_init.shape[0] * one_body_init.shape[1]
-    one_body_final = x_final[0][:one_body_size].reshape(one_body_init.shape)
-    two_body_final = x_final[0][one_body_size:].reshape(two_body_init.shape)
+    one_body_final = final_state.position[:one_body_size].reshape(one_body_init.shape)
+    two_body_final = final_state.position[one_body_size:].reshape(two_body_init.shape)
 
     return one_body_final, two_body_final, losses
 
@@ -305,7 +304,6 @@ def Score_MSA(one_body, two_body, seqs, gaps=False):
 
     # Initialize parameters
     states = 21 #20 aa + gap
-    #use a bitmap to encode the integer version of the msa
     msa_bitmap = jax.nn.one_hot(seqs_int, states)
     if not gaps:
         states = states - 1
@@ -334,7 +332,6 @@ def main(fasta, filter_msa, filter_msa_row, filter_msa_col, gaps):
         preprocess_msa.reduce_gaps()
         seqs = preprocess_msa.seqs
         names = preprocess_msa.names
-        # aa = preprocess_msa.aa
         aa = preprocess_msa.aa_edit
     else:
         print(f"Running MSA without preprocessing")
@@ -346,9 +343,7 @@ def main(fasta, filter_msa, filter_msa_row, filter_msa_col, gaps):
     Plot_loss(losses, name=fasta.split('.')[0]) 
     Plot_one_body(one_body, aa, name=fasta.split('.')[0])
     Plot_cmap(two_body, aa, name=fasta.split('.')[0])
-
     Score_MSA(one_body, two_body, seqs, gaps = gaps)
 
 if  __name__ == '__main__':
     main(*CL_input())
-

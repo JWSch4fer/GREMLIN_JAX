@@ -1,7 +1,10 @@
 0_readme
+lbfgs.py
 *.score
 msa/2oug.fas
 msa/2lx7.sto
+_other/
+trial/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
