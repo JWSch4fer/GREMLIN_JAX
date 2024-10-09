@@ -4,6 +4,7 @@ contourpy==1.2.1
 cycler==0.12.1
 etils==1.9.2
 fonttools==4.53.1
+GradientTransformation==1.0.0
 jax==0.4.31
 jaxlib==0.4.31
 kiwisolver==1.4.5
@@ -17,6 +18,7 @@ pillow==10.4.0
 pyparsing==3.1.4
 python-dateutil==2.9.0.post0
 scipy==1.14.1
+setuptools==75.1.0
 six==1.16.0
 toolz==0.12.1
 typing_extensions==4.12.2
