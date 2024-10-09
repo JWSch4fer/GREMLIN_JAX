@@ -7,7 +7,7 @@
 pip install -r requirements.txt
 
 ```
-**NOTE**: switched to L-BFGS algorithm for minimization, it seems to be more stabel that adaDelta
+**NOTE**: switched to L-BFGS algorithm for minimization, it seems to be more stable that adaDelta
 
 
 ## Available flags:
